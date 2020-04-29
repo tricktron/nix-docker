@@ -1,1 +1,1 @@
-# MINIMAL NIX DOCKER CONTAINER BUILT WITH NIX
+# Minimal Nix Docker Container Built With Nix
