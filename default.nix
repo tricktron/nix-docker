@@ -17,33 +17,28 @@ buildLayeredImage rec {
         coreutils
         nix
     ];
-     extraCommands = ''
+     extraCommands = with pkgs; ''
       # create the Nix DB
       export NIX_REMOTE=local?root=$PWD
       export USER=nobody
-      ${contents}/bin/nix-store --load-db < ${closureInfo { rootPaths = [ contents ]; }}/registration
+      ${contents}/bin/nix-store --load-db < ${closureInfo { rootPaths = contents; }}/registration
 
-      # set the user profile
-      ${contents}/bin/nix-env --profile nix/var/nix/profiles/default --set ${contents}
-
-      # minimal
-      mkdir -p bin usr/bin
-      ln -s /nix/var/nix/profiles/default/bin/sh bin/sh
-      ln -s /nix/var/nix/profiles/default/bin/env usr/bin/env
-
-      # might as well...
-      ln -s /nix/var/nix/profiles/default/bin/bash bin/bash
+      mkdir -p bin usr/bin etc/nix /nix/var/nix/profiles/per-user/root /root/.nix-defexpr
+      ln -s ${bashInteractive}/bin/bash /bin/bash
+      ln -s /bin/bash bin/sh
+      ln -s ${coreutils}/bin/env usr/bin/env
+      ln -s /nix/var/nix/profiles/per-user/root/profile /root/.nix-profile
+      echo 'sandbox = false' > etc/nix/nix.conf
     '';
 
     config = {
-      Cmd = [ "/nix/var/nix/profiles/default/bin/bash" ];
+      Cmd = [ "/bin/bash" ];
       Env = [
-        "ENV=/nix/var/nix/profiles/default/etc/profile.d/nix.sh"
-        "GIT_SSL_CAINFO=/nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt"
-        "LD_LIBRARY_PATH=/nix/var/nix/profiles/default/lib"
-        "PAGER=cat"
-        "PATH=/nix/var/nix/profiles/default/bin"
-        "SSL_CERT_FILE=/nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt"
+        "NIX_PAGER=cat"
+        "PATH=/root/.nix-profile/bin:/bin:/usr/bin"
+        "MANPATH=/root/.nix-profile/share/man"
+        "NIX_SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt"
+        "NIX_PATH=nixpkgs=${pkgs}"
       ];
     };
 }
